@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center_vertical"
+    android:orientation="vertical"
+    android:padding="16dp"
+    tools:context=".AssetCheckingActivity">
+
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:srcCompat="@mipmap/ic_atnslogo" />
+
+    <!-- Read Tag Button -->
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:id="@+id/buttonReadTag"
+        android:text="Read/Stop Tag"
+        android:textSize="15sp"
+        android:layout_marginTop="20dp"
+        android:backgroundTint="@color/purple"
+        app:cornerRadius = "10dp"/>
+
+    <TextView
+        android:id="@+id/text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Please scan your tag and then check it in/out below:" />
+
+    <!-- Tag ID -->
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:id="@+id/editTextTagId"
+        android:background="@drawable/login_form_design"
+        android:drawablePadding="8dp"
+        android:hint="RFID Tag ID"
+        android:padding="8dp"
+        android:textColor="@color/black"
+        android:textColorHighlight="@color/cardview_dark_background"
+        android:layout_marginTop="10dp"/>
+
+    <!-- Tag Number -->
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:id="@+id/editTextTagNumber"
+        android:background="@drawable/login_form_design"
+        android:drawablePadding="8dp"
+        android:hint="Tag Number"
+        android:padding="8dp"
+        android:textColor="@color/black"
+        android:textColorHighlight="@color/cardview_dark_background"
+        android:layout_marginTop="10dp"/>
+
+    <!-- Item Description -->
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:id="@+id/editTextDescription"
+        android:background="@drawable/login_form_design"
+        android:drawablePadding="8dp"
+        android:hint="Item Description"
+        android:padding="8dp"
+        android:textColor="@color/black"
+        android:textColorHighlight="@color/cardview_dark_background"
+        android:layout_marginTop="10dp"/>
+
+    <!-- Responsible Person -->
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:id="@+id/editTextResPerson"
+        android:background="@drawable/login_form_design"
+        android:drawablePadding="8dp"
+        android:hint="Responsible Person"
+        android:padding="8dp"
+        android:textColor="@color/black"
+        android:textColorHighlight="@color/cardview_dark_background"
+        android:layout_marginTop="10dp"/>
+
+    <TextView
+        android:id="@+id/tagId"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="0dp"/>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:hint="@string/choice"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+        >
+
+        <AutoCompleteTextView
+            android:id="@+id/auto_complete_txt"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="none"/>
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- ATNS ID -->
+<!--    <EditText-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="40dp"-->
+<!--        android:id="@+id/editTextAtnsID"-->
+<!--        android:background="@drawable/login_form_design"-->
+<!--        android:drawablePadding="8dp"-->
+<!--        android:hint="ATNS ID"-->
+<!--        android:padding="8dp"-->
+<!--        android:textColor="@color/black"-->
+<!--        android:textColorHighlight="@color/cardview_dark_background"-->
+<!--        android:layout_marginTop="10dp"/>-->
+
+    <!-- Submit Button -->
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:id="@+id/buttonSubmitForm"
+        android:text="Check In/Out Asset"
+        android:textSize="15sp"
+        android:layout_marginTop="20dp"
+        android:backgroundTint="@color/purple"
+        app:cornerRadius = "10dp"/>
+
+</LinearLayout>
