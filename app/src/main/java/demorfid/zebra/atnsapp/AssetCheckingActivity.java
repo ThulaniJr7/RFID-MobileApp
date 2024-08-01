@@ -127,8 +127,6 @@ public class AssetCheckingActivity extends AppCompatActivity {
         };
         runnable.run();
 
-        // This is the Asset Check In Page
-
 //        xml body which should be sent when doing an Asset check in/out
 
 //        <?xml version="1.0" encoding="utf-8" ?>
