@@ -138,8 +138,6 @@ public class AssetCheckingActivity extends AppCompatActivity {
                     }
                 });
 
-//        xml body which should be sent when doing an Asset check in/out
-
 //        <?xml version="1.0" encoding="utf-8" ?>
 //        <XML timestamp="2002-08-15T08:36:47-07:00">
 //            <Asset>
