@@ -15,8 +15,12 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.zebra.rfid.api3.ACCESS_OPERATION_CODE;
 import com.zebra.rfid.api3.ACCESS_OPERATION_STATUS;
 import com.zebra.rfid.api3.Antennas;
@@ -41,6 +45,9 @@ import com.zebra.rfid.api3.STOP_TRIGGER_TYPE;
 import com.zebra.rfid.api3.TagData;
 import com.zebra.rfid.api3.TriggerInfo;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 
 import retrofit2.Call;
@@ -50,11 +57,6 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class AssetCheckingActivity extends AppCompatActivity {
-
-    String [] item = {"Check In", "Check Out"};
-
-    AutoCompleteTextView autoCompleteTextView;
-    ArrayAdapter<String> adapterItems;
 
     private static ReaderDevice readerDevice;
     private static RFIDReader reader;
@@ -67,7 +69,7 @@ public class AssetCheckingActivity extends AppCompatActivity {
     private static Readers readers;
     private static ArrayList<ReaderDevice> availableRFIDReaderList;
     private int MAX_POWER = 270;
-
+    private RadioGroup radioGroup;
     private Button buttonReadTags;
     private Button buttonSubmitAssetCheck;
     private Button buttonStopReadTags;
@@ -79,7 +81,9 @@ public class AssetCheckingActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_asset_checking);
 
-
+        buttonReadTags = findViewById(R.id.buttonReadTag);
+        buttonStopReadTags = findViewById(R.id.buttonStopReadTags);
+        radioGroup = (RadioGroup)findViewById(R.id.groupradio);
         buttonSubmitAssetCheck = findViewById(R.id.buttonSubmitForm);
         editTextTagId = findViewById(R.id.editTextTagId);
         editTextTagNumber = findViewById(R.id.editTextTagNumber);
@@ -88,27 +92,16 @@ public class AssetCheckingActivity extends AppCompatActivity {
         editTextAtnsID = findViewById(R.id.editTextAtnsID);
         editTextFarNum = findViewById(R.id.editTextFarNum);
 
-        autoCompleteTextView = findViewById(R.id.auto_complete_txt);
-//        String item = "in";
-
-        adapterItems = new ArrayAdapter<String>(this, R.layout.list_item, item);
-        autoCompleteTextView.setAdapter(adapterItems);
-
-        autoCompleteTextView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long id) {
-                String item = adapterView.getItemAtPosition(i).toString();
-                Toast.makeText(AssetCheckingActivity.this, "Item: " + item, Toast.LENGTH_SHORT).show();
-            }
-        });
-
         readers = new Readers(this, ENUM_TRANSPORT.ALL);
 
         try {
             ArrayList readersListArray = readers.GetAvailableRFIDReaderList();
             ReaderDevice readerDevice = (ReaderDevice) readersListArray.get(0);
             reader = readerDevice.getRFIDReader();
+            retrieveAssetList();
         } catch (InvalidUsageException e) {
+            throw new RuntimeException(e);
+        } catch (JSONException e) {
             throw new RuntimeException(e);
         }
 
@@ -126,6 +119,24 @@ public class AssetCheckingActivity extends AppCompatActivity {
             }
         };
         runnable.run();
+
+        radioGroup.setOnCheckedChangeListener(
+                new RadioGroup
+                        .OnCheckedChangeListener() {
+                    @Override
+
+                    // Check which radio button has been clicked
+                    public void onCheckedChanged(RadioGroup group,
+                                                 int checkedId)
+                    {
+
+                        // Get the selected Radio Button
+                        RadioButton
+                                radioButton
+                                = (RadioButton)group
+                                .findViewById(checkedId);
+                    }
+                });
 
 //        xml body which should be sent when doing an Asset check in/out
 
@@ -147,17 +158,44 @@ public class AssetCheckingActivity extends AppCompatActivity {
 //         The endpoint to be used to retrieve inventory data:
 //         10.1.21.185/Home/RetrieveAssetList
 
+
         buttonSubmitAssetCheck.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+
+                int selectedId = radioGroup.getCheckedRadioButtonId();
+                if (selectedId == -1) {
+                    Toast.makeText(AssetCheckingActivity.this,
+                                    "No answer has been selected",
+                                    Toast.LENGTH_SHORT)
+                            .show();
+                }
+                else {
+
+                    RadioButton radioButton
+                            = (RadioButton)radioGroup
+                            .findViewById(selectedId);
+
+                    // Now display the value of selected item
+                    // by the Toast message
+                    Toast.makeText(AssetCheckingActivity.this,
+                                    radioButton.getText(),
+                                    Toast.LENGTH_SHORT)
+                            .show();
+                }
+
                 String tagNum = editTextTagNumber.getText().toString();
                 String atnsId = editTextAtnsID.getText().toString();
+                String astCheck = "In";
 
-                if (tagNum != null && atnsId != null && item != null) {
+                if (tagNum != null && atnsId != null)
+//                if (tagNum != null && atnsId != null && item != null)
+                {
 
                     try{
 
-//                        postData(tagNum, atnsId, item);
+//                        postData(tagNum, atnsId, astCheck);
+                        Toast.makeText(AssetCheckingActivity.this, "The asset has been Checked In/Out!", Toast.LENGTH_SHORT).show();
 
                     }catch (Exception ex){
 
@@ -174,6 +212,8 @@ public class AssetCheckingActivity extends AppCompatActivity {
             }
         });
 
+
+
     }
 
     public void postData(String tagNumber, String atnsID, String assetCheck){
@@ -189,7 +229,7 @@ public class AssetCheckingActivity extends AppCompatActivity {
         AssetCheck assetCheck1 = new AssetCheck(tagNumber, atnsID, assetCheck);
 
         // calling a method to create a post and passing our modal class.
-        Call<AssetCheck> call = retrofitAPI.createPost(assetCheck1);
+        Call<AssetCheck> call = retrofitAPI.createPostCheck(assetCheck1);
 
         call.enqueue(new Callback<AssetCheck>() {
             @Override
@@ -208,6 +248,73 @@ public class AssetCheckingActivity extends AppCompatActivity {
             }
         });
 
+    }
+
+    public void retrieveAssetList() throws JSONException {
+
+        Gson gson = new GsonBuilder()
+                .setLenient()
+                .create();
+
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("http://10.1.21.185/Home/")
+                .addConverterFactory(GsonConverterFactory.create(gson))
+                .build();
+//        // below line is to create an instance for our retrofit api class.
+        RetrofitAPI retrofitAPI = retrofit.create(RetrofitAPI.class);
+
+        String xml = "testing";
+        // passing data from our text fields to our modal class.
+        AssetList assetList = new AssetList(xml);
+
+//        JSONObject jsonObject = new JSONObject();
+//        jsonObject.put("testing", xml);
+//
+//        Call<AssetList> call = retrofitAPI.createPostAssetList(jsonObject.toString());
+
+        // calling a method to create a post and passing our modal class.
+        Call<AssetList> call = retrofitAPI.createPostAssetList(assetList.toString());
+
+        call.enqueue(new Callback<AssetList>() {
+            @Override
+            public void onResponse(Call<AssetList> call, Response<AssetList> response) {
+                // this method is called when we get response from our api.
+                Toast.makeText(AssetCheckingActivity.this, "Data returned: " + response.message(), Toast.LENGTH_SHORT).show();
+
+            }
+
+            @Override
+            public void onFailure(Call<AssetList> call, Throwable t) {
+                // setting text to our text view when
+                // we get error response from API.
+                Toast.makeText(AssetCheckingActivity.this, "Error Adding Data" + t.getMessage(), Toast.LENGTH_SHORT).show();
+
+            }
+        });
+
+    }
+
+
+    public void stopReadTags(View view) {
+        try {
+            reader.Actions.Inventory.stop();
+            System.out.println("Tag Read stopped");
+        } catch (InvalidUsageException e) {
+            throw new RuntimeException(e);
+        } catch (OperationFailureException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void readTags(View view) {
+        System.out.println("Tag Read initiated");
+        try {
+            reader.Actions.Inventory.perform();
+        } catch (InvalidUsageException e) {
+            throw new RuntimeException(e);
+        } catch (OperationFailureException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void ConfigureReader() {

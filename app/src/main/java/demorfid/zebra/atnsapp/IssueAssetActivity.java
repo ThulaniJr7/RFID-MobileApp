@@ -2,9 +2,9 @@ package demorfid.zebra.atnsapp;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -16,6 +16,8 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.zebra.rfid.api3.ACCESS_OPERATION_CODE;
 import com.zebra.rfid.api3.ACCESS_OPERATION_STATUS;
 import com.zebra.rfid.api3.Antennas;
@@ -40,17 +42,26 @@ import com.zebra.rfid.api3.STOP_TRIGGER_TYPE;
 import com.zebra.rfid.api3.TagData;
 import com.zebra.rfid.api3.TriggerInfo;
 
+import org.json.JSONObject;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import retrofit2.Call;
@@ -98,7 +109,6 @@ public class IssueAssetActivity extends AppCompatActivity {
 
         readers = new Readers(this, ENUM_TRANSPORT.ALL);
 
-//        OkHttpClient client = new OkHttpClient();
         String url = "http://10.1.21.185/Home/IssueNewAsset";
 
         try {
@@ -156,6 +166,16 @@ public class IssueAssetActivity extends AppCompatActivity {
 
                     try{
 
+                        JSONObject jsonObject = new JSONObject();
+                        jsonObject.put("rfidTagId", rfidTagId);
+                        jsonObject.put("rfidTagNum", tagNum);
+                        jsonObject.put("rfidDesc", itemDescription);
+                        jsonObject.put("rfidResPerson", resPerson);
+                        jsonObject.put("rfidATNSId", atnsId);
+                        jsonObject.put("rfidFarNum", farNum);
+                        String jsonString = jsonObject.toString();
+//                        new PostData().execute(jsonString);
+
                         postData(rfidTagId, tagNum, itemDescription, resPerson, atnsId, farNum);
 
                     }catch (Exception ex){
@@ -175,34 +195,38 @@ public class IssueAssetActivity extends AppCompatActivity {
 
     }
 
-    public void postData(String tagID, String tagNumber, String description, String responsiblePeson, String atnsID, String fNum){
+    public void postData(String tagID, String tagNumber, String description, String responsiblePerson, String atnsID, String fNum){
+
+        OkHttpClient client = new OkHttpClient.Builder()
+                .retryOnConnectionFailure(true)
+                .connectTimeout(15, TimeUnit.SECONDS)
+                .build();
+
+        Gson gson = new GsonBuilder()
+                .setLenient()
+                .create();
 
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl("http://10.1.21.185/Home/")
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
-//        // below line is to create an instance for our retrofit api class.
+
         RetrofitAPI retrofitAPI = retrofit.create(RetrofitAPI.class);
 
-        // passing data from our text fields to our modal class.
-        UserAsset userAsset = new UserAsset(tagID, tagNumber, description, responsiblePeson, atnsID, fNum);
+        UserAsset userAsset = new UserAsset(tagID, tagNumber, description, responsiblePerson, atnsID, fNum);
 
-        // calling a method to create a post and passing our modal class.
         Call<UserAsset> call = retrofitAPI.createPost(userAsset);
 
         call.enqueue(new Callback<UserAsset>() {
             @Override
             public void onResponse(Call<UserAsset> call, Response<UserAsset> response) {
-                // this method is called when we get response from our api.
-                Toast.makeText(IssueAssetActivity.this, "Data added to Asset", Toast.LENGTH_SHORT).show();
-
+                Toast.makeText(IssueAssetActivity.this, "Data added to Asset " + response.message(), Toast.LENGTH_LONG).show();
             }
 
             @Override
             public void onFailure(Call<UserAsset> call, Throwable t) {
-                // setting text to our text view when
-                // we get error response from API.
-                Toast.makeText(IssueAssetActivity.this, "Error Adding Data", Toast.LENGTH_SHORT).show();
+                Toast.makeText(IssueAssetActivity.this, "Error Adding Data " + t.getMessage(), Toast.LENGTH_LONG).show();
+                System.out.println(t.getMessage());
 
             }
         });

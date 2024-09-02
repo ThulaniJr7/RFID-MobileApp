@@ -2,6 +2,7 @@ package demorfid.zebra.atnsapp;
 
 import retrofit2.Call;
 import retrofit2.http.Body;
+import retrofit2.http.Headers;
 import retrofit2.http.POST;
 
 public interface RetrofitAPI {
@@ -17,6 +18,12 @@ public interface RetrofitAPI {
     @POST("AssetCheckIn")
 
         //on below line we are creating a method to post our data.
-    Call<AssetCheck> createPost(@Body AssetCheck assetCheck);
+    Call<AssetCheck> createPostCheck(@Body AssetCheck assetCheck);
+
+    @Headers("Content-Type: application/json")
+    @POST("RetrieveAssetList")
+
+        //on below line we are creating a method to post our data.
+    Call<AssetList> createPostAssetList(@Body String string);
 }
 

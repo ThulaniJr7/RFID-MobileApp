@@ -11,6 +11,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -49,6 +50,9 @@ public class RFIDReadActivity extends AppCompatActivity {
     protected static Context context;
     private EventHandler eventHandler;
 
+    private ArrayList<String> items;
+    private ArrayAdapter<String> adapter;
+//    private Listview listview;
     public Handler mEventHandler = new Handler(Looper.getMainLooper());
     private AsyncTask<Void, Void, String> AutoConnectDeviceTask;
     private static Readers readers;
@@ -60,12 +64,13 @@ public class RFIDReadActivity extends AppCompatActivity {
 
     TextView textViewId, textView;
 
-    @SuppressLint("MissingInflatedId")
+    @SuppressLint({"MissingInflatedId", "WrongViewCast"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_rfidread);
 
+//        listview = findViewById(R.id.listview);
         textViewId = (TextView) findViewById(R.id.tagId);
         textView = (TextView) findViewById(R.id.text);
 
