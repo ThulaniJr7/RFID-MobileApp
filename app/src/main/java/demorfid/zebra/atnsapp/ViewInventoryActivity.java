@@ -239,9 +239,7 @@ public class ViewInventoryActivity extends AppCompatActivity {
         String tagNumber = "null";
         String desc = "null";
         for(int num = 0; num < rfidTagId.length; num++){
-
             if(item.equals(rfidTagId[num])){
-
                 int size = 0;
                 if(items.isEmpty()){
                     items.add(item);
