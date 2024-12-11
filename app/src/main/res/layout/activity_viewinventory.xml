@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center_vertical"
+    android:orientation="vertical"
+    android:padding="6dp"
+    tools:context=".ViewInventoryActivity">
+
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:srcCompat="@mipmap/ic_atnslogo" />
+
+    <!-- Read Tags Button -->
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:id="@+id/buttonReadTags"
+        android:text="Read Tag(s)"
+        android:textSize="18sp"
+        android:layout_margin="20dp"
+        android:backgroundTint="@color/purple"
+        android:textColor="@color/white"
+        app:cornerRadius = "20dp"
+        android:onClick="readTags"/>
+
+    <TextView
+        android:id="@+id/text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Your tagged assets will be shown below: " />
+
+<!--    <TextView-->
+<!--        android:id="@+id/tagId"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:text="..."-->
+<!--        android:layout_marginTop="20dp"/>-->
+
+    <!-- Read Tags Button -->
+
+        <ListView
+            android:id="@+id/listview"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:layout_margin="10dp"
+            android:divider="@android:color/black"
+            android:dividerHeight="1.0sp"
+            android:scrollbars="vertical" />
+
+
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:id="@+id/buttonStopReadTags"
+        android:text="Stop Read"
+        android:textSize="18sp"
+        android:layout_margin="20dp"
+        android:backgroundTint="@color/purple"
+        android:textColor="@color/white"
+        app:cornerRadius = "20dp"
+        android:onClick="stopReadTags"/>
+
+    <!-- Asset Location Text -->
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:id="@+id/editTextAssetLocation"
+        android:background="@drawable/login_form_design"
+        android:drawablePadding="8dp"
+        android:hint="Asset Location"
+        android:padding="8dp"
+        android:textColor="@color/black"
+        android:textColorHighlight="@color/cardview_dark_background"
+        android:layout_marginTop="10dp"/>
+
+    <!-- Update Asset Location Button -->
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:id="@+id/buttonUpdateLocation"
+        android:text="Update Asset Location"
+        android:textSize="15sp"
+        android:layout_margin="20dp"
+        android:backgroundTint="@color/purple"
+        android:textColor="@color/white"
+        app:cornerRadius = "10dp"/>
+
+<!--    <TextView-->
+<!--        android:gravity="center"-->
+<!--        android:textAlignment="center"-->
+<!--        android:id="@+id/textView1"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="60dp"-->
+<!--        android:text="TextView1"-->
+<!--        android:layout_weight="66.6"/>-->
+
+<!--    <LinearLayout-->
+<!--        android:orientation="vertical"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_weight="33.3">-->
+
+<!--        <TextView-->
+<!--            android:gravity="center"-->
+<!--            android:id="@+id/textView2"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="30dp"-->
+<!--            android:text="TextView2"/>-->
+
+<!--        <TextView-->
+<!--            android:gravity="center"-->
+<!--            android:id="@+id/textView3"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="30dp"-->
+<!--            android:text="TextView3"/>-->
+
+<!--    </LinearLayout>-->
+
+
+
+</LinearLayout>
+</ScrollView>

@@ -1,24 +1,23 @@
 package demorfid.zebra.atnsapp;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.content.Intent;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ListView;
+import android.widget.RadioButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.zebra.rfid.api3.ACCESS_OPERATION_CODE;
 import com.zebra.rfid.api3.ACCESS_OPERATION_STATUS;
 import com.zebra.rfid.api3.Antennas;
@@ -43,81 +42,120 @@ import com.zebra.rfid.api3.STOP_TRIGGER_TYPE;
 import com.zebra.rfid.api3.TagData;
 import com.zebra.rfid.api3.TriggerInfo;
 
-import org.json.JSONObject;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLConnection;
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-public class IssueAssetActivity extends AppCompatActivity {
+public class ViewInventoryActivity extends AppCompatActivity {
 
-    Connection connection, connection1;
+    Connection connection, connection1, connection2;
+
     private static ReaderDevice readerDevice;
     private static RFIDReader reader;
     private static String TAG = "DEMO";
     protected static Context context;
-    private IssueAssetActivity.EventHandler eventHandler;
+    private ViewInventoryActivity.EventHandler eventHandler;
+
+    ListView listView;
+    ArrayList<String> items;
+    ArrayList<TagData> tagData;
+    ArrayAdapter<String> adapter;
 
     public Handler mEventHandler = new Handler(Looper.getMainLooper());
     private AsyncTask<Void, Void, String> AutoConnectDeviceTask;
     private static Readers readers;
     private static ArrayList<ReaderDevice> availableRFIDReaderList;
     private int MAX_POWER = 270;
-    private Button buttonReadTags;
-    private Button buttonStopReadTag;
-    private Button buttonSubmitAsset;
-    private EditText editTextTagId, editTextTagNumber, editTextItemDesc, editTextResPerson, editTextAtnsID, editTextFarNum;
-    TextView textViewId;
 
-    @SuppressLint("MissingInflatedId")
+    private Button buttonReadTags;
+    private Button buttonStopReadTags;
+    private Button buttonAssetUpdateLocation;
+    private EditText editTextAssetLocation;
+    TextView textViewId, textView;
+
+    String [] farNumbers = new String[200];
+    String [] atnsIdNums = new String[200];
+    String [] description = new String[200];
+    String [] atnsTagNum = new String[200];
+    String [] rfidTagId = new String[200];
+    String [] rfidFarNum = new String[200];
+    String [] rfidFAtnsIdNum = new String[200];
+
+    @SuppressLint({"MissingInflatedId", "WrongViewCast", "CutPasteId"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_issue_asset);
+        setContentView(R.layout.activity_viewinventory);
+        buttonAssetUpdateLocation = findViewById(R.id.buttonUpdateLocation);
+        editTextAssetLocation = findViewById(R.id.editTextAssetLocation);
+//        ListView mListView = (ListView) findViewById(R.id.listview);
 
-        buttonReadTags = findViewById(R.id.buttonReadTag);
-        buttonStopReadTag = findViewById(R.id.buttonStopReadTag);
-        buttonSubmitAsset = findViewById(R.id.buttonSubmitForm);
-        textViewId = (TextView) findViewById(R.id.tagId);
+        listView = findViewById(R.id.listview);
+        items = new ArrayList<>();
+        tagData = new ArrayList<>();
+//        items.add("1st Tag");
 
-//        editTextTagId = findViewById(R.id.editTextTagId);
-        editTextTagNumber = findViewById(R.id.editTextTagNumber);
-        editTextItemDesc = findViewById(R.id.editTextDescription);
-        editTextResPerson = findViewById(R.id.editTextResPerson);
-        editTextAtnsID = findViewById(R.id.editTextAtnsID);
-        editTextFarNum = findViewById(R.id.editTextFarNum);
-
-        readers = new Readers(this, ENUM_TRANSPORT.ALL);
+        adapter = new ArrayAdapter<>(getApplicationContext(), android.R.layout.simple_list_item_1, items);
+       // adapter = new ArrayAdapter<>(getApplicationContext(), android.R.layout.simple_list_item_1, tagData);
+        listView.setAdapter(adapter);
 
         ConSQL c = new ConSQL();
         connection = c.conclass();
 
         ConSQL c1 = new ConSQL();
         connection1 = c1.conclass();
+
+        if(c != null){
+            try{
+
+                // SQL Statement to fetch all stock
+                String sqlstatement = "Select * from ATNStock";
+                Statement smt = connection.createStatement();
+                ResultSet set = smt.executeQuery(sqlstatement);
+
+                // SQL Statement to fetch rfid tag data
+                String sqlstatement1 = "Select * from RFidTag";
+                Statement smt1 = connection1.createStatement();
+                ResultSet set1 = smt1.executeQuery(sqlstatement1);
+
+                while (set.next()){
+                    int row = set.getRow() - 1;
+                    farNumbers[row] = set.getString(1);
+                    atnsIdNums[row] = set.getString(3);
+                    description[row] = set.getString(4);
+                    atnsTagNum[row] = set.getString(2);
+                }
+
+                while (set1.next()){
+                    int row1 = set1.getRow() - 1;
+                    rfidTagId[row1] = set1.getString(1);
+                    rfidFAtnsIdNum[row1] = set1.getString(2);
+                    rfidFarNum[row1] = set1.getString(3);
+                }
+
+                connection.close();
+                connection1.close();
+            }
+            catch (Exception e){
+                Log.e("Error: ", e.getMessage());
+            }
+
+        }
+
+        textViewId = (TextView) findViewById(R.id.tagId);
+        textView = (TextView) findViewById(R.id.text);
+
+        buttonReadTags = findViewById(R.id.buttonReadTags);
+        buttonStopReadTags = findViewById(R.id.buttonStopReadTags);
+
+        readers = new Readers(this, ENUM_TRANSPORT.ALL);
 
         try {
             ArrayList readersListArray = readers.GetAvailableRFIDReaderList();
@@ -142,55 +180,94 @@ public class IssueAssetActivity extends AppCompatActivity {
         };
         runnable.run();
 
-        // Set a click listener for the Form Submission button
-        buttonSubmitAsset.setOnClickListener(new View.OnClickListener() {
+        buttonAssetUpdateLocation.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
 
-//                 Retrieve relevant fields within the form
-                String tagNum = editTextTagNumber.getText().toString();
-                String itemDescription = editTextItemDesc.getText().toString();
-                String resPerson = editTextResPerson.getText().toString();
-                String atnsId = editTextAtnsID.getText().toString();
-                String farNum = editTextFarNum.getText().toString();
-                String rfidTagId = textViewId.getText().toString();
+                String assetLocation = editTextAssetLocation.getText().toString();
+                int assetCheck = 0;
 
-                if (rfidTagId != null && tagNum != null && itemDescription != null && resPerson != null && atnsId != null && farNum != null) {
+                    try{
 
-                    if(c != null){
-                        try{
+                        for(int x = 0; x < items.size(); x++){
+                            ConSQL c2 = new ConSQL();
+                            connection2 = c2.conclass();
+                            if(c2 != null)
+                            {
+                                String tagId = items.get(x);
+                                for(int y = 0; y < rfidTagId.length; y++){
 
-                            String sqlstatement = "Insert into ATNStock (FARNumber, TagNum, ID, Description, TagNumber, ResPerson) " +
-                                    "values('" + farNum + "', '" + tagNum + "', '" + atnsId + "', '" + itemDescription + "', '" + tagNum + "', '" + resPerson + "');";
-                            Statement smt = connection.createStatement();
-                            smt.executeUpdate(sqlstatement);
+                                    String atnsIdNum = rfidTagId[y].toString();
+                                    if(tagId.equals(atnsIdNum)){
 
-                            connection.close();
+                                        String rfidATNSIdNum = rfidFAtnsIdNum[y].toString();
+                                        String sqlstatement2 = "Update ATNStock set RoomName = '" + assetLocation + "' where ID = '" + rfidATNSIdNum + "'";
+                                        Statement smt2 = connection2.createStatement();
+                                        smt2.executeUpdate(sqlstatement2);
 
-                            String sqlstatement1 = "Insert into RFidTag (RFidTagID, ATNSid, ATNSFarNum) values('" + rfidTagId + "', '" + atnsId + "', '" + farNum + "');";
-                            Statement smt1 = connection1.createStatement();
-                            smt1.executeUpdate(sqlstatement1);
-
-                            connection1.close();
-
-                        }
-                        catch (Exception e){
-                            Log.e("Error: ", e.getMessage());
+                                        assetCheck = 1;
+                                        break;
+                                    }
+                                    else{
+                                        System.out.println("This Tag ID isn't associated with an asset. Continue...");
+                                    }
+                                }
+                            }
+                            connection2.close();
                         }
 
                     }
+                    catch (Exception e){
+                        Log.e("Error: ", e.getMessage());
+                    }
 
-                    Toast.makeText(IssueAssetActivity.this, "This Asset has been successfully loaded!", Toast.LENGTH_LONG).show();
-
-                    Intent intent = new Intent(IssueAssetActivity.this, HomeActivity.class);
-                    startActivity(intent);
-
-                } else {
-
-                    Toast.makeText(IssueAssetActivity.this, "Please ensure all fields are filled in", Toast.LENGTH_SHORT).show();
+                if (assetCheck == 1){
+                    Toast.makeText(ViewInventoryActivity.this, "The assets have been updated in the database!", Toast.LENGTH_LONG).show();
+                }
+                else{
+                    Toast.makeText(ViewInventoryActivity.this, "The assets weren't updated as they aren't linked to an ATNS asset", Toast.LENGTH_LONG).show();
                 }
             }
         });
+    }
+
+    public void addItem(String item){
+
+        int itemSize = items.size();
+        int validation = 0;
+        // item is the EPC ID
+        String tagNumber = "null";
+        String desc = "null";
+        for(int num = 0; num < rfidTagId.length; num++){
+
+            if(item.equals(rfidTagId[num])){
+
+                int size = 0;
+                if(items.isEmpty()){
+                    items.add(item);
+                    listView.setAdapter(adapter);
+                    adapter.notifyDataSetChanged();
+//                    validation = 1;
+                }
+                else{
+
+//                    System.out.println("Continue");
+                    items.add(item);
+                    listView.setAdapter(adapter);
+                    adapter.notifyDataSetChanged();
+                }
+
+            }
+            else{
+                System.out.println("Continue...");
+            }
+        }
+
+//        for(int z = 0; z < rfidFAtnsIdNum.length; z++){
+//            if(tagNumber.equals(rfidFAtnsIdNum[z])){
+//                desc = description[z];
+//            }
+//        }
 
     }
 
@@ -224,7 +301,7 @@ public class IssueAssetActivity extends AppCompatActivity {
             try {
                 // receive events from reader
                 if (eventHandler == null)
-                    eventHandler = new IssueAssetActivity.EventHandler();
+                    eventHandler = new ViewInventoryActivity.EventHandler();
                 reader.Events.addEventsListener(eventHandler);
                 reader.Events.setHandheldEvent(true); // tag event with tag data
                 reader.Events.setTagReadEvent(true);
@@ -276,7 +353,10 @@ public class IssueAssetActivity extends AppCompatActivity {
                     Log.d(TAG, "Tag ID: " + myTags[index].getTagID());
                     String tagId = myTags[index].getTagID();
 //                    Sets the last read Tag ID to the Text View
-                    textViewId.setText(tagId);
+                    int tagTotal = myTags.length;
+                    String tagCount = Integer.toString(tagTotal);
+//                    textViewId.setText(tagId);
+                    addItem(tagId);
                     if (myTags[index].getOpCode() == ACCESS_OPERATION_CODE.ACCESS_OPERATION_READ &&
                             myTags[index].getOpStatus() == ACCESS_OPERATION_STATUS.ACCESS_SUCCESS) {
                         if (myTags[index].getMemoryBankData().length() > 0) {
@@ -287,7 +367,7 @@ public class IssueAssetActivity extends AppCompatActivity {
             }
         }
 
-//         Status Event Notification
+        // Status Event Notification
 //        public void eventStatusNotify(RfidStatusEvents rfidStatusEvents) {
 //            Log.d(TAG, "Status Notification: " + rfidStatusEvents.StatusEventData.getStatusEventType());
 //        }
@@ -318,17 +398,30 @@ public class IssueAssetActivity extends AppCompatActivity {
         }
 
         public void handleTriggerPress(boolean pressed) {
-            if (pressed) {
-                System.out.println("Tag Read initiated");
-                try {
-                    reader.Actions.Inventory.perform();
-                } catch (InvalidUsageException e) {
-                    throw new RuntimeException(e);
-                } catch (OperationFailureException e) {
-                    throw new RuntimeException(e);
-                }
-            } else
-                stopInventory();
+//            if (pressed) {
+//                System.out.println("Tag Read initiated");
+//                try {
+//                    reader.Actions.Inventory.perform();
+//                } catch (InvalidUsageException e) {
+//                    throw new RuntimeException(e);
+//                } catch (OperationFailureException e) {
+//                    throw new RuntimeException(e);
+//                }
+//            } else
+//                stopInventory();
+        }
+
+        synchronized void performInventory() {
+            // check reader connection
+            if (!isReaderConnected())
+                return;
+            try {
+                reader.Actions.Inventory.perform();
+            } catch (InvalidUsageException e) {
+                e.printStackTrace();
+            } catch (OperationFailureException e) {
+                e.printStackTrace();
+            }
         }
 
         synchronized void stopInventory() {
@@ -342,6 +435,14 @@ public class IssueAssetActivity extends AppCompatActivity {
             }
         }
 
+        private boolean isReaderConnected() {
+            if (reader != null && reader.isConnected())
+                return true;
+            else {
+                Log.d(TAG, "reader is not connected");
+                return false;
+            }
+        }
 
     }
 

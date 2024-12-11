@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
 <LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:gravity="center_vertical"
@@ -21,6 +20,7 @@
         app:srcCompat="@mipmap/ic_atnslogo" />
 
     <!-- Read Tag Button -->
+
     <Button
         android:layout_width="match_parent"
         android:layout_height="40dp"
@@ -29,6 +29,7 @@
         android:textSize="15sp"
         android:layout_marginTop="20dp"
         android:backgroundTint="@color/purple"
+        android:textColor="@color/white"
         app:cornerRadius = "10dp"
         android:onClick="readTags"/>
 
@@ -55,6 +56,7 @@
         android:textSize="15sp"
         android:layout_marginTop="20dp"
         android:backgroundTint="@color/purple"
+        android:textColor="@color/white"
         app:cornerRadius = "10dp"
         android:onClick="stopReadTags"/>
 
@@ -85,6 +87,7 @@
         android:layout_marginTop="10dp"/>
 
     <!-- Item Description -->
+
     <EditText
         android:layout_width="match_parent"
         android:layout_height="40dp"
@@ -145,6 +148,7 @@
         android:textSize="15sp"
         android:layout_marginTop="20dp"
         android:backgroundTint="@color/purple"
+        android:textColor="@color/white"
         app:cornerRadius = "10dp"/>
 
 </LinearLayout>

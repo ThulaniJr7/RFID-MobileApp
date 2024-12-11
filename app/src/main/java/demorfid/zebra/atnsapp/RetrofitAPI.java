@@ -16,9 +16,12 @@ public interface RetrofitAPI {
     Call<UserAsset> createPost(@Body UserAsset userAsset);
 
     @POST("AssetCheckIn")
-
         //on below line we are creating a method to post our data.
     Call<AssetCheck> createPostCheck(@Body AssetCheck assetCheck);
+
+    @POST("AssetUpdateLocation")
+        //on below line we are creating a method to post our data.
+    Call<AssetUpdateLocation> createPostUpdate(@Body AssetUpdateLocation assetUpdateLocation);
 
     @Headers("Content-Type: application/json")
     @POST("RetrieveAssetList")

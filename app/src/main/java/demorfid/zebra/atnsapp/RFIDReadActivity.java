@@ -12,6 +12,7 @@ import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -40,19 +41,30 @@ import com.zebra.rfid.api3.STOP_TRIGGER_TYPE;
 import com.zebra.rfid.api3.TagData;
 import com.zebra.rfid.api3.TriggerInfo;
 
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.ArrayList;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
+
 public class RFIDReadActivity extends AppCompatActivity {
+
+    Connection connection;
 
     private static ReaderDevice readerDevice;
     private static RFIDReader reader;
     private static String TAG = "DEMO";
     protected static Context context;
     private EventHandler eventHandler;
-
+    TagData[] myTags;
     private ArrayList<String> items;
     private ArrayAdapter<String> adapter;
-//    private Listview listview;
+
     public Handler mEventHandler = new Handler(Looper.getMainLooper());
     private AsyncTask<Void, Void, String> AutoConnectDeviceTask;
     private static Readers readers;
@@ -69,8 +81,6 @@ public class RFIDReadActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_rfidread);
-
-//        listview = findViewById(R.id.listview);
         textViewId = (TextView) findViewById(R.id.tagId);
         textView = (TextView) findViewById(R.id.text);
 
@@ -83,8 +93,6 @@ public class RFIDReadActivity extends AppCompatActivity {
             ArrayList readersListArray = readers.GetAvailableRFIDReaderList();
             ReaderDevice readerDevice = (ReaderDevice) readersListArray.get(0);
             reader = readerDevice.getRFIDReader();
-            // It works until you have to connect to the reader. It should be done in a Main UI Thread
-            //reader.connect();
         } catch (InvalidUsageException e) {
             throw new RuntimeException(e);
         }
@@ -106,10 +114,6 @@ public class RFIDReadActivity extends AppCompatActivity {
 
     }
 
-    // This is the endpoint to fetch the RFID List:
-    // 10.1.21.185/Home/RetrieveRFIDList
-
-    //
     public void stopReadTags(View view) {
         try {
             reader.Actions.Inventory.stop();
@@ -185,13 +189,14 @@ public class RFIDReadActivity extends AppCompatActivity {
         // Read Event Notification
         public void eventReadNotify(RfidReadEvents e) {
             // Recommended to use new method getReadTagsEx for better performance in case of large tag population
-            TagData[] myTags = reader.Actions.getReadTags(100);
+            myTags = reader.Actions.getReadTags(100);
             if (myTags != null) {
 //                Below is where the Reader is reading the tags and should then be used to show on the screen
                 for (int index = 0; index < myTags.length; index++) {
                     Log.d(TAG, "Tag ID: " + myTags[index].getTagID());
                     String tagId = myTags[index].getTagID();
 //                    Sets the last read Tag ID to the Text View
+                    int tagTotal = index + 1;
                     textViewId.setText(tagId);
                     if (myTags[index].getOpCode() == ACCESS_OPERATION_CODE.ACCESS_OPERATION_READ &&
                             myTags[index].getOpStatus() == ACCESS_OPERATION_STATUS.ACCESS_SUCCESS) {
@@ -202,11 +207,6 @@ public class RFIDReadActivity extends AppCompatActivity {
                 }
             }
         }
-
-        // Status Event Notification
-//        public void eventStatusNotify(RfidStatusEvents rfidStatusEvents) {
-//            Log.d(TAG, "Status Notification: " + rfidStatusEvents.StatusEventData.getStatusEventType());
-//        }
 
         @SuppressLint({"StaticFieldLeak", "SuspiciousIndentation"})
         public void eventStatusNotify(RfidStatusEvents rfidStatusEvents) {

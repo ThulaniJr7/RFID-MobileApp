@@ -17,6 +17,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
@@ -48,6 +49,9 @@ import com.zebra.rfid.api3.TriggerInfo;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.ArrayList;
 
 import retrofit2.Call;
@@ -63,6 +67,7 @@ public class AssetCheckingActivity extends AppCompatActivity {
     private static String TAG = "DEMO";
     protected static Context context;
     private AssetCheckingActivity.EventHandler eventHandler;
+    Connection connection, connection1, connection2;
 
     public Handler mEventHandler = new Handler(Looper.getMainLooper());
     private AsyncTask<Void, Void, String> AutoConnectDeviceTask;
@@ -70,10 +75,21 @@ public class AssetCheckingActivity extends AppCompatActivity {
     private static ArrayList<ReaderDevice> availableRFIDReaderList;
     private int MAX_POWER = 270;
     private RadioGroup radioGroup;
+    ArrayList<String> items;
     private Button buttonReadTags;
     private Button buttonSubmitAssetCheck;
     private Button buttonStopReadTags;
     private EditText editTextTagId, editTextTagNumber, editTextItemDesc, editTextResPerson, editTextFarNum, editTextAtnsID;
+    TextView textViewId;
+
+    String [] farNumbers = new String[30000];
+    String [] atnsIdNums = new String[30000];
+    String [] description = new String[30000];
+    String [] resPerson = new String[30000];
+    String [] rfidTagId = new String[30000];
+    String [] rfidFarNum = new String[30000];
+    String [] rfidFAtnsIdNum = new String[30000];
+
 
     @SuppressLint("MissingInflatedId")
     @Override
@@ -85,23 +101,66 @@ public class AssetCheckingActivity extends AppCompatActivity {
         buttonStopReadTags = findViewById(R.id.buttonStopReadTags);
         radioGroup = (RadioGroup)findViewById(R.id.groupradio);
         buttonSubmitAssetCheck = findViewById(R.id.buttonSubmitForm);
-        editTextTagId = findViewById(R.id.editTextTagId);
+//        editTextTagId = findViewById(R.id.editTextTagId);
         editTextTagNumber = findViewById(R.id.editTextTagNumber);
         editTextItemDesc = findViewById(R.id.editTextDescription);
         editTextResPerson = findViewById(R.id.editTextResPerson);
         editTextAtnsID = findViewById(R.id.editTextAtnsID);
         editTextFarNum = findViewById(R.id.editTextFarNum);
+        items = new ArrayList<>();
+        textViewId = (TextView) findViewById(R.id.tagId);
+
 
         readers = new Readers(this, ENUM_TRANSPORT.ALL);
+
+        ConSQL c = new ConSQL();
+        connection = c.conclass();
+
+        ConSQL c1 = new ConSQL();
+        connection1 = c1.conclass();
+
+        if(c != null){
+            try{
+
+                // SQL Statement to fetch all stock
+                String sqlstatement = "Select * from ATNStock";
+                Statement smt = connection.createStatement();
+                ResultSet set = smt.executeQuery(sqlstatement);
+
+                // SQL Statement to fetch rfid tag data
+                String sqlstatement1 = "Select * from RFidTag";
+                Statement smt1 = connection1.createStatement();
+                ResultSet set1 = smt1.executeQuery(sqlstatement1);
+
+                while (set.next()){
+                    int row = set.getRow() - 1;
+                    farNumbers[row] = set.getString(1);
+                    atnsIdNums[row] = set.getString(3);
+                    description[row] = set.getString(4);
+                    resPerson[row] = set.getString(16);
+                }
+
+                while (set1.next()){
+                    int row1 = set1.getRow() - 1;
+                    rfidTagId[row1] = set1.getString(1);
+                    rfidFAtnsIdNum[row1] = set1.getString(2);
+                    rfidFarNum[row1] = set1.getString(3);
+                }
+
+                connection.close();
+                connection1.close();
+            }
+            catch (Exception e){
+                Log.e("Error: ", e.getMessage());
+            }
+
+        }
 
         try {
             ArrayList readersListArray = readers.GetAvailableRFIDReaderList();
             ReaderDevice readerDevice = (ReaderDevice) readersListArray.get(0);
             reader = readerDevice.getRFIDReader();
-            retrieveAssetList();
         } catch (InvalidUsageException e) {
-            throw new RuntimeException(e);
-        } catch (JSONException e) {
             throw new RuntimeException(e);
         }
 
@@ -138,28 +197,12 @@ public class AssetCheckingActivity extends AppCompatActivity {
                     }
                 });
 
-//        <?xml version="1.0" encoding="utf-8" ?>
-//        <XML timestamp="2002-08-15T08:36:47-07:00">
-//            <Asset>
-//                <RFIDTagID>065650656</RFIDTagID>
-//                <TagNumber>Far02445042</TagNumber>
-//                <Description>Laptop Bag</Description>
-//                <ResPerson>John Smith</ResPerson>
-//                <ATNSID>16sfdf65v1dg6fbvdbvs</ATNSID>
-//                <AssetCheck>Out</AssetCheck>
-//            </Asset>
-//        </XML>
-
-//         The endpoint to be used:
-//         10.1.21.185/Home/AssetCheckIn
-//
-//         The endpoint to be used to retrieve inventory data:
-//         10.1.21.185/Home/RetrieveAssetList
-
-
         buttonSubmitAssetCheck.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+
+                int assetCheck = 0;
+                String astCheck = "In";
 
                 int selectedId = radioGroup.getCheckedRadioButtonId();
                 if (selectedId == -1) {
@@ -174,6 +217,7 @@ public class AssetCheckingActivity extends AppCompatActivity {
                             = (RadioButton)radioGroup
                             .findViewById(selectedId);
 
+                    astCheck = radioButton.getText().toString();
                     // Now display the value of selected item
                     // by the Toast message
                     Toast.makeText(AssetCheckingActivity.this,
@@ -184,114 +228,63 @@ public class AssetCheckingActivity extends AppCompatActivity {
 
                 String tagNum = editTextTagNumber.getText().toString();
                 String atnsId = editTextAtnsID.getText().toString();
-                String astCheck = "In";
+                String rfidTagId = textViewId.getText().toString();
 
                 if (tagNum != null && atnsId != null)
-//                if (tagNum != null && atnsId != null && item != null)
                 {
 
+                    ConSQL c2 = new ConSQL();
+                    connection2 = c2.conclass();
+
                     try{
+                        if(c2 != null){
 
-//                        postData(tagNum, atnsId, astCheck);
-                        Toast.makeText(AssetCheckingActivity.this, "The asset has been Checked In/Out!", Toast.LENGTH_SHORT).show();
+                            String sqlstatement2 = "Update ATNStock set AssetCheck = " + astCheck + " where ID = " + atnsId;
+                            Statement smt2 = connection2.createStatement();
+                            smt2.executeUpdate(sqlstatement2);
 
-                    }catch (Exception ex){
+                            connection2.close();
+                            assetCheck = 1;
 
-                        // Implement code to submit information into
-                        Toast.makeText(AssetCheckingActivity.this, "Error: Asset wasn't loaded. Please try again!" + ex.getMessage(), Toast.LENGTH_SHORT).show();
-
+                        }
                     }
-//                    Intent intent = new Intent(MainActivity.this, HomeActivity.class);
-//                    startActivity(intent);
+                    catch (Exception e){
+                        Log.e("Error: ", e.getMessage());
+                    }
+
                 } else {
 
                     Toast.makeText(AssetCheckingActivity.this, "Please ensure all fields are filled in", Toast.LENGTH_SHORT).show();
                 }
-            }
-        });
 
-
-
-    }
-
-    public void postData(String tagNumber, String atnsID, String assetCheck){
-
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://10.1.21.185/Home/")
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
-//        // below line is to create an instance for our retrofit api class.
-        RetrofitAPI retrofitAPI = retrofit.create(RetrofitAPI.class);
-
-        // passing data from our text fields to our modal class.
-        AssetCheck assetCheck1 = new AssetCheck(tagNumber, atnsID, assetCheck);
-
-        // calling a method to create a post and passing our modal class.
-        Call<AssetCheck> call = retrofitAPI.createPostCheck(assetCheck1);
-
-        call.enqueue(new Callback<AssetCheck>() {
-            @Override
-            public void onResponse(Call<AssetCheck> call, Response<AssetCheck> response) {
-                // this method is called when we get response from our api.
-                Toast.makeText(AssetCheckingActivity.this, "Data added to Asset", Toast.LENGTH_SHORT).show();
-
-            }
-
-            @Override
-            public void onFailure(Call<AssetCheck> call, Throwable t) {
-                // setting text to our text view when
-                // we get error response from API.
-                Toast.makeText(AssetCheckingActivity.this, "Error Adding Data", Toast.LENGTH_SHORT).show();
-
+                if (assetCheck == 1){
+                    Toast.makeText(AssetCheckingActivity.this, "The asset has been Checked In/Out!", Toast.LENGTH_LONG).show();
+                }
+                else{
+                    Toast.makeText(AssetCheckingActivity.this, "The assets weren't updated as they aren't linked to an ATNS asset", Toast.LENGTH_LONG).show();
+                }
             }
         });
 
     }
 
-    public void retrieveAssetList() throws JSONException {
+    public void addItem(String item){
+        for(int num = 0; num < rfidTagId.length; num++){
+            if(item.equals(rfidTagId[num])){
 
-        Gson gson = new GsonBuilder()
-                .setLenient()
-                .create();
+                String desc = description[num].toString();
+                String resP = resPerson[num].toString();
 
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://10.1.21.185/Home/")
-                .addConverterFactory(GsonConverterFactory.create(gson))
-                .build();
-//        // below line is to create an instance for our retrofit api class.
-        RetrofitAPI retrofitAPI = retrofit.create(RetrofitAPI.class);
-
-        String xml = "testing";
-        // passing data from our text fields to our modal class.
-        AssetList assetList = new AssetList(xml);
-
-//        JSONObject jsonObject = new JSONObject();
-//        jsonObject.put("testing", xml);
-//
-//        Call<AssetList> call = retrofitAPI.createPostAssetList(jsonObject.toString());
-
-        // calling a method to create a post and passing our modal class.
-        Call<AssetList> call = retrofitAPI.createPostAssetList(assetList.toString());
-
-        call.enqueue(new Callback<AssetList>() {
-            @Override
-            public void onResponse(Call<AssetList> call, Response<AssetList> response) {
-                // this method is called when we get response from our api.
-                Toast.makeText(AssetCheckingActivity.this, "Data returned: " + response.message(), Toast.LENGTH_SHORT).show();
+//                editTextTagId.setText(item);
+                editTextItemDesc.setText(desc);
+                editTextResPerson.setText(resP);
 
             }
-
-            @Override
-            public void onFailure(Call<AssetList> call, Throwable t) {
-                // setting text to our text view when
-                // we get error response from API.
-                Toast.makeText(AssetCheckingActivity.this, "Error Adding Data" + t.getMessage(), Toast.LENGTH_SHORT).show();
-
+            else{
+                System.out.println("Continue...");
             }
-        });
-
+        }
     }
-
 
     public void stopReadTags(View view) {
         try {
@@ -375,7 +368,8 @@ public class AssetCheckingActivity extends AppCompatActivity {
                     Log.d(TAG, "Tag ID: " + myTags[index].getTagID());
                     String tagId = myTags[index].getTagID();
 //                    Sets the last read Tag ID to the Text View
-//                    textViewId.setText(tagId);
+                    textViewId.setText(tagId);
+                    addItem(tagId);
                     if (myTags[index].getOpCode() == ACCESS_OPERATION_CODE.ACCESS_OPERATION_READ &&
                             myTags[index].getOpStatus() == ACCESS_OPERATION_STATUS.ACCESS_SUCCESS) {
                         if (myTags[index].getMemoryBankData().length() > 0) {
