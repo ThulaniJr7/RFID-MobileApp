@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "350725706463",
+    "project_id": "atns-583d3",
+    "storage_bucket": "atns-583d3.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:350725706463:android:15e53e127b672627e14f6a",
+        "android_client_info": {
+          "package_name": "com.atns.rfid"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDR8Fmt93cPtCKg1AAr1YXvk0vVazqzGbg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
